@@ -53,10 +53,6 @@ bool nearBorder(const Elem128* big) {
 	return ((*big <= LOWER_BORDER) || (*big >= UPPER_BORDER));
 }
 
-void lowestOrderBits(Elem128* big, Elem64 n_bits) {
-	*big &= ((1ULL << n_bits) - 1);
-}
-
 void add(const Elem128* a, const Elem128* b, Elem128* dst) {
 	*dst = (*a) + (*b);
 }
@@ -73,28 +69,12 @@ void mul64(const Elem128* a, const Elem64* b, Elem128* dst) {
         *dst = (*a) * (*b);
 }
 
-void div(const Elem128* a, const Elem128* b, Elem128* dst) {
-        *dst = (*a) / (*b);
-}
-
-void div64(const Elem128* a, const Elem64* b, Elem128* dst) {
-	*dst = (*a) / (*b);
-}
-
 void addOne(const Elem128* a, Elem128* dst) {
 	*dst = (*a) + 1;
 }
 
 void subOne(const Elem128* a, Elem128* dst) {
 	*dst = (*a) - 1;
-}
-
-void addFromHalves(const Elem128* a, Elem64 hi, Elem64 lo, Elem128* dst) {
-	*dst = (*a) + (((Elem128) hi) << 64) + ((Elem128) lo);
-}
-
-void subFromHalves(const Elem128* a, Elem64 hi, Elem64 lo, Elem128* dst) {
-	*dst = (*a) - (((Elem128) hi) << 64) - ((Elem128) lo);
 }
 
 void addTwoHalves(const Elem128* val, Elem64 hi_a, Elem64 lo_a, Elem64 hi_b, Elem64 lo_b, Elem128* dst) {
@@ -113,10 +93,6 @@ void mulAddInPlace(Elem128* src, const Elem128* a, const Elem128* b) {
 	*src += (*a) * (*b);
 }
 
-void mulSubInPlace(Elem128* src, const Elem128* a, const Elem128* b) {
-	*src -= (*a) * (*b);
-}
-
 void negate(const Elem128* src, Elem128* dst) {
 	*dst = ~(*src) + 1;
 }
@@ -131,11 +107,6 @@ void rsh(const Elem128* src, Elem64 n, Elem128* dst) {
 
 void rshSignExtend(const Elem128* src, Elem64 n, Elem128* dst) {
 	*dst = (Elem128)(((__int128) *src) >> n);
-}
-
-void truncateRight(const Elem128* src, Elem64 n, Elem128* dst) {
-        *dst = (~(*src) + 1) >> n;
-	*dst = ~(*dst) + 1;
 }
 
 bool checkPositiveUint64(const Elem128* big) {

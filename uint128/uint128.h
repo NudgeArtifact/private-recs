@@ -21,24 +21,16 @@ bool nearBorder(const Elem128* big);
 
 void add(const Elem128* a, const Elem128* b, Elem128* dst);
 void addOne(const Elem128* a, Elem128* dst);
-void addFromHalves(const Elem128* a, Elem64 hi, Elem64 lo, Elem128* dst);
 void sub(const Elem128* a, const Elem128* b, Elem128* dst);
 void subOne(const Elem128* a, Elem128* dst);
-void subFromHalves(const Elem128* a, Elem64 hi, Elem64 lo, Elem128* dst);
 void mul(const Elem128* a, const Elem128* b, Elem128* dst);
 void mul64(const Elem128* a, const Elem64* b, Elem128* dst);
-void div(const Elem128* a, const Elem128* b, Elem128* dst);
-void div64(const Elem128* a, const Elem64* b, Elem128* dst);
 
 void mulAddInPlace(Elem128* src, const Elem128* a, const Elem128* b);
-void mulSubInPlace(Elem128* src, const Elem128* a, const Elem128* b);
-
-void lowestOrderBits(Elem128* big, Elem64 n_bits);
 void negate(const Elem128* src, Elem128* dst);
 void lsh(const Elem128* src, Elem64 n, Elem128* dst);
 void rsh(const Elem128* src, Elem64 n, Elem128* dst);
 void rshSignExtend(const Elem128* src, Elem64 n, Elem128* dst);
-void truncateRight(const Elem128* src, Elem64 n, Elem128* dst);
 
 bool checkPositiveUint64(const Elem128* big);
 bool checkUint64(const Elem128* big);

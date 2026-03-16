@@ -7,22 +7,21 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"time"
 	"sync"
+	"time"
 
-	"private-recs/share"
-	"private-recs/dmsb"
-	"private-recs/dcf"
-	. "private-recs/uint128"
+	"github.com/NudgeArtifact/private-recs/dcf"
+	"github.com/NudgeArtifact/private-recs/dmsb"
+	"github.com/NudgeArtifact/private-recs/share"
+	. "github.com/NudgeArtifact/private-recs/uint128"
 )
-
 
 type Network struct {
 	myIdx     int
 	senders   [][]io.Writer
 	receivers [][]io.Reader
 
-	senderConns [][]net.Conn
+	senderConns   [][]net.Conn
 	receiverConns [][]net.Listener
 
 	numRounds int
@@ -65,28 +64,9 @@ func (n *Network) Close() {
 
 	for i, _ := range n.receivers {
 		for j, _ := range n.senders[i] {
-                	n.receiverConns[i][j].Close()
-		}
-        }
-}
-
-func localIP() net.IP {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		fmt.Println(err)
-		panic("Error looking up own IP")
-	}
-
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP
-			}
+			n.receiverConns[i][j].Close()
 		}
 	}
-
-	panic("Own IP not found")
-	return nil
 }
 
 func NewTestNetwork(n int, numWorkers int) []*Network {
@@ -106,7 +86,7 @@ func NewTestNetwork(n int, numWorkers int) []*Network {
 			senders:   make([][]io.Writer, n),
 			receivers: make([][]io.Reader, n),
 			bytesSent: make([][]int, n),
-                        bytesRecv: make([][]int, n),
+			bytesRecv: make([][]int, n),
 			sendMu:    make([][]sync.Mutex, n),
 			recvMu:    make([][]sync.Mutex, n),
 			outgoing:  make([][]byte, 3),
@@ -137,12 +117,12 @@ func NewTCPNetwork(idx int, config *NetworkConfig) *Network {
 		myIdx:         idx,
 		senders:       make([][]io.Writer, len(config.IPAddrs)),
 		receivers:     make([][]io.Reader, len(config.IPAddrs)),
-                senderConns:   make([][]net.Conn, len(config.IPAddrs)),
-                receiverConns: make([][]net.Listener, len(config.IPAddrs)),
+		senderConns:   make([][]net.Conn, len(config.IPAddrs)),
+		receiverConns: make([][]net.Listener, len(config.IPAddrs)),
 		bytesSent:     make([][]int, len(config.IPAddrs)),
 		bytesRecv:     make([][]int, len(config.IPAddrs)),
-                sendMu:        make([][]sync.Mutex, len(config.IPAddrs)),
-                recvMu:        make([][]sync.Mutex, len(config.IPAddrs)),
+		sendMu:        make([][]sync.Mutex, len(config.IPAddrs)),
+		recvMu:        make([][]sync.Mutex, len(config.IPAddrs)),
 		outgoing:      make([][]byte, 3),
 	}
 
@@ -156,12 +136,12 @@ func NewTCPNetwork(idx int, config *NetworkConfig) *Network {
 
 		n.senders[i] = make([]io.Writer, len(config.Ports[i][idx]))
 		n.receivers[i] = make([]io.Reader, len(config.Ports[i][idx]))
-                n.senderConns[i] = make([]net.Conn, len(config.Ports[i][idx]))
-                n.receiverConns[i] = make([]net.Listener, len(config.Ports[i][idx]))
+		n.senderConns[i] = make([]net.Conn, len(config.Ports[i][idx]))
+		n.receiverConns[i] = make([]net.Listener, len(config.Ports[i][idx]))
 		n.bytesSent[i] = make([]int, len(config.Ports[i][idx]))
 		n.bytesRecv[i] = make([]int, len(config.Ports[i][idx]))
 		n.sendMu[i] = make([]sync.Mutex, len(config.Ports[i][idx]))
-                n.recvMu[i] = make([]sync.Mutex, len(config.Ports[i][idx]))
+		n.recvMu[i] = make([]sync.Mutex, len(config.Ports[i][idx]))
 
 		for j := 0; j < len(config.Ports[i][idx]); j++ {
 			go func(connIdx int, workerIdx int) {
@@ -237,12 +217,12 @@ func (n *Network) MyIdx() int {
 
 func ByteLen(msg interface{}) int {
 	var buf bytes.Buffer
-        enc := gob.NewEncoder(&buf)
-        err := enc.Encode(msg)
-        if err != nil {
-                panic(fmt.Sprintf("Failed to encode message: %v", err))
-        }                       
-        return len(buf.Bytes())
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(msg)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to encode message: %v", err))
+	}
+	return len(buf.Bytes())
 }
 
 func (n *Network) SendBytesParallel(idx int, workerIdx int, msg []byte) {
@@ -250,7 +230,7 @@ func (n *Network) SendBytesParallel(idx int, workerIdx int, msg []byte) {
 		panic(err)
 	}
 
-        n.bytesSent[idx][workerIdx] += len(msg)
+	n.bytesSent[idx][workerIdx] += len(msg)
 }
 
 func (n *Network) RecvBytesParallel(idx int, workerIdx int, msg []byte) {
@@ -270,93 +250,93 @@ func (n *Network) SendUint64(idx int, val uint64) {
 	n.sendMu[idx][0].Lock()
 	defer n.sendMu[idx][0].Unlock()
 
-        var intBuf [8]byte
-        binary.LittleEndian.PutUint64(intBuf[:], val)
-        n.SendBytes(idx, intBuf[:])
+	var intBuf [8]byte
+	binary.LittleEndian.PutUint64(intBuf[:], val)
+	n.SendBytes(idx, intBuf[:])
 }
 
 func (n *Network) RecvUint64(idx int) uint64 {
 	n.recvMu[idx][0].Lock()
-        defer n.recvMu[idx][0].Unlock()
+	defer n.recvMu[idx][0].Unlock()
 
-        var intBuf [8]byte
+	var intBuf [8]byte
 	n.RecvBytes(idx, intBuf[:])
-        return uint64(binary.LittleEndian.Uint64(intBuf[:]))
+	return uint64(binary.LittleEndian.Uint64(intBuf[:]))
 }
 
 // TODO: Make faster using unsafe.slice
 func (n *Network) appendUint128(idx int, u *Uint128) {
-        bytes := Uint128ToBytes(u)
-        n.outgoing[idx] = append(n.outgoing[idx], bytes...)
+	bytes := Uint128ToBytes(u)
+	n.outgoing[idx] = append(n.outgoing[idx], bytes...)
 }
 
 func (n *Network) AppendUint128(idx int, u *Uint128) {
 	n.sendMu[idx][0].Lock()
-        defer n.sendMu[idx][0].Unlock()
+	defer n.sendMu[idx][0].Unlock()
 	n.appendUint128(idx, u)
 }
 
 func (n *Network) SendUint128(idx int, u *Uint128) {
-        n.sendMu[idx][0].Lock()
-        n.appendUint128(idx, u)
-        n.sendMu[idx][0].Unlock()
+	n.sendMu[idx][0].Lock()
+	n.appendUint128(idx, u)
+	n.sendMu[idx][0].Unlock()
 	n.SendOutgoingMsgs()
 }
 
 func (n *Network) recvUint128(idx int, u *Uint128) {
-        bytes := make([]byte, 16)
-        n.RecvBytes(idx, bytes)
-        BytesToUint128Dst(bytes, u)
+	bytes := make([]byte, 16)
+	n.RecvBytes(idx, bytes)
+	BytesToUint128Dst(bytes, u)
 }
 
 func (n *Network) RecvUint128(idx int, u *Uint128) {
 	n.recvMu[idx][0].Lock()
-        defer n.recvMu[idx][0].Unlock()
+	defer n.recvMu[idx][0].Unlock()
 	n.recvUint128(idx, u)
 }
 
 func (n *Network) appendByteArr(idx int, arr []byte) {
-        var intBuf [8]byte
-        binary.LittleEndian.PutUint64(intBuf[:], uint64(len(arr)))
+	var intBuf [8]byte
+	binary.LittleEndian.PutUint64(intBuf[:], uint64(len(arr)))
 
-        n.outgoing[idx] = append(n.outgoing[idx], intBuf[:]...)
-        n.outgoing[idx] = append(n.outgoing[idx], arr...)
+	n.outgoing[idx] = append(n.outgoing[idx], intBuf[:]...)
+	n.outgoing[idx] = append(n.outgoing[idx], arr...)
 }
 
 func (n *Network) AppendByteArr(idx int, arr []byte) {
 	n.sendMu[idx][0].Lock()
-        defer n.sendMu[idx][0].Unlock()
+	defer n.sendMu[idx][0].Unlock()
 	n.appendByteArr(idx, arr)
 }
 
 func (n *Network) recvByteArr(idx int) []byte {
-        var intBuf [8]byte
-        n.RecvBytes(idx, intBuf[:])
-        msgLen := binary.LittleEndian.Uint64(intBuf[:])
+	var intBuf [8]byte
+	n.RecvBytes(idx, intBuf[:])
+	msgLen := binary.LittleEndian.Uint64(intBuf[:])
 
-        msgBytes := make([]byte, msgLen)
-        n.RecvBytes(idx, msgBytes)
-        return msgBytes
+	msgBytes := make([]byte, msgLen)
+	n.RecvBytes(idx, msgBytes)
+	return msgBytes
 }
 
 func (n *Network) RecvByteArr(idx int) []byte {
 	n.recvMu[idx][0].Lock()
-        defer n.recvMu[idx][0].Unlock()
+	defer n.recvMu[idx][0].Unlock()
 	return n.recvByteArr(idx)
 }
 
 func (n *Network) AppendTruncKey(idx int, key *share.TruncKey) {
 	n.sendMu[idx][0].Lock()
-        defer n.sendMu[idx][0].Unlock()
+	defer n.sendMu[idx][0].Unlock()
 
 	n.appendByteArr(idx, []byte(key.Dcf))
-        n.appendUint128(idx, &key.Share)
-        n.appendUint128(idx, &key.Share2)
+	n.appendUint128(idx, &key.Share)
+	n.appendUint128(idx, &key.Share2)
 }
 
 func (n *Network) RecvTruncKey(idx int, key *share.TruncKey) {
 	n.recvMu[idx][0].Lock()
-        defer n.recvMu[idx][0].Unlock()
+	defer n.recvMu[idx][0].Unlock()
 
 	key.Dcf = n.recvByteArr(idx)
 	n.recvUint128(idx, &key.Share)
@@ -365,15 +345,15 @@ func (n *Network) RecvTruncKey(idx int, key *share.TruncKey) {
 
 func (n *Network) AppendDmsbKey(idx int, key *dmsb.DMSBkey128) {
 	n.sendMu[idx][0].Lock()
-        defer n.sendMu[idx][0].Unlock()
+	defer n.sendMu[idx][0].Unlock()
 
-        if len(key.Cws) != 128 {
-              panic("Not yet supported")
-        }
+	if len(key.Cws) != 128 {
+		panic("Not yet supported")
+	}
 
 	if len(key.Keys) != 129 {
-              panic("Not yet supported")
-        }
+		panic("Not yet supported")
+	}
 
 	for i := 0; i < 129; i++ {
 		n.appendByteArr(idx, key.Keys[i])
@@ -386,18 +366,18 @@ func (n *Network) AppendDmsbKey(idx int, key *dmsb.DMSBkey128) {
 
 func (n *Network) RecvDmsbKey(idx int, key *dmsb.DMSBkey128) {
 	n.recvMu[idx][0].Lock()
-        defer n.recvMu[idx][0].Unlock()
+	defer n.recvMu[idx][0].Unlock()
 
 	key.Keys = make([]dcf.DCFkey, 129)
 	key.Cws = make([]Uint128, 128)
 
 	for i := 0; i < 129; i++ {
 		key.Keys[i] = n.recvByteArr(idx)
-        }
+	}
 
-        for i := 0; i < 128; i++ {
+	for i := 0; i < 128; i++ {
 		n.recvUint128(idx, &key.Cws[i])
-        }
+	}
 }
 
 func (n *Network) PrintComm() {
@@ -406,36 +386,36 @@ func (n *Network) PrintComm() {
 	for i := 0; i < len(n.bytesSent); i++ {
 		fmt.Printf("  To %d: ", i)
 		for j := 0; j < len(n.bytesSent[i]); j++ {
-			fmt.Printf(" %f MB ", float64(n.bytesSent[i][j]) / 1024.0 / 1024.0)
+			fmt.Printf(" %f MB ", float64(n.bytesSent[i][j])/1024.0/1024.0)
 			totalSent += n.bytesSent[i][j]
 		}
 		fmt.Printf("\n")
 	}
-	fmt.Printf(" Total sent: %f MB\n", float64(totalSent) / 1024.0 / 1024.0)
+	fmt.Printf(" Total sent: %f MB\n", float64(totalSent)/1024.0/1024.0)
 
-        fmt.Println("Bytes received")
+	fmt.Println("Bytes received")
 	totalReceived := 0
-        for i := 0; i < len(n.bytesSent); i++ {
-                fmt.Printf("  From %d: ", i)
-                for j := 0; j < len(n.bytesSent[i]); j++ {
-                        fmt.Printf(" %f MB ", float64(n.bytesRecv[i][j]) / 1024.0 / 1024.0)
+	for i := 0; i < len(n.bytesSent); i++ {
+		fmt.Printf("  From %d: ", i)
+		for j := 0; j < len(n.bytesSent[i]); j++ {
+			fmt.Printf(" %f MB ", float64(n.bytesRecv[i][j])/1024.0/1024.0)
 			totalReceived += n.bytesRecv[i][j]
-                }
-                fmt.Printf("\n")
-        }
-	fmt.Printf(" Total received: %f MB\n", float64(totalReceived) / 1024.0 / 1024.0)
+		}
+		fmt.Printf("\n")
+	}
+	fmt.Printf(" Total received: %f MB\n", float64(totalReceived)/1024.0/1024.0)
 	fmt.Printf("Num Rounds: %d\n", n.numRounds)
 }
 
-func (n * Network) SendOutgoingMsgs() {
-        for i := 0; i < 3; i++ {
-                if len(n.outgoing[i]) > 0 {
-                        n.SendBytesParallel(i, 0, n.outgoing[i])
-                        n.outgoing[i] = n.outgoing[i][:0]
-                }
-        }
+func (n *Network) SendOutgoingMsgs() {
+	for i := 0; i < 3; i++ {
+		if len(n.outgoing[i]) > 0 {
+			n.SendBytesParallel(i, 0, n.outgoing[i])
+			n.outgoing[i] = n.outgoing[i][:0]
+		}
+	}
 
-        n.AddRound()
+	n.AddRound()
 }
 
 func (n *Network) AddRound() {

@@ -15,18 +15,18 @@ func Aes128MMO(xk *uint32, dst, src *byte)
 func ExpandKeyAsm(key *byte, enc *uint32)
 
 type AesPrf struct {
-        enc []uint32
+	enc []uint32
 }
 
 func NewCipher(key []byte) (*AesPrf, error) {
-        n := 11*4
-        c := AesPrf{make([]uint32, n)}
-        ExpandKeyAsm(&key[0], &c.enc[0])
-        return &c, nil
+	n := 11 * 4
+	c := AesPrf{make([]uint32, n)}
+	ExpandKeyAsm(&key[0], &c.enc[0])
+	return &c, nil
 }
 
 func (c *AesPrf) BlockSize() int { return 16 }
 
 func (c *AesPrf) Encrypt(dst, src []byte) {
-        EncryptAes128(&c.enc[0], &dst[0], &src[0])
+	EncryptAes128(&c.enc[0], &dst[0], &src[0])
 }

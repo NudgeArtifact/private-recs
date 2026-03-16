@@ -1,21 +1,16 @@
 package multdpf
 
-func BytesToMB(bytes uint64) float64 {
-  return float64(bytes)/(1024*1024)
-}
-
+// BytesToKB converts a byte count to kilobytes.
 func BytesToKB(bytes uint64) float64 {
-  return float64(bytes)/1024
+	return float64(bytes) / 1024
 }
 
+// DPFSizeBytes returns the serialized size of a DPF key in bytes.
 func DPFSizeBytes(key DPFkey) uint64 {
-  return uint64(len(key))
+	return uint64(len(key))
 }
 
-func DPFSizeMB(key DPFkey) float64 {
-  return BytesToMB(DPFSizeBytes(key))
-}
-
+// DPFSizeKB returns the serialized size of a DPF key in kilobytes.
 func DPFSizeKB(key DPFkey) float64 {
-  return BytesToKB(DPFSizeBytes(key))
+	return BytesToKB(DPFSizeBytes(key))
 }

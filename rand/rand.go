@@ -32,7 +32,7 @@ import (
 )
 
 type PRGKey [aes.BlockSize]byte
-		
+
 const bufSize = 8192
 
 // We use the AES-CTR to generate pseudo-random  numbers using a
@@ -54,7 +54,7 @@ type BufPRGReader struct {
 	stream *bufio.Reader
 
 	twoUintBuf [16]byte
-	prgMutex sync.Mutex
+	prgMutex   sync.Mutex
 }
 
 func NewPRG(key *PRGKey) *PRGReader {
@@ -113,22 +113,22 @@ func (b *BufPRGReader) Int63() int64 {
 }
 
 func (b *BufPRGReader) TwoUint64() (uint64, uint64) {
-        b.prgMutex.Lock()
-        read := 0
-        for read < 16 {
-                n, err := b.stream.Read(b.twoUintBuf[read:16])
-                if err != nil {
-                        panic("Should never get here")
-                }
-                read += n
-        }
+	b.prgMutex.Lock()
+	read := 0
+	for read < 16 {
+		n, err := b.stream.Read(b.twoUintBuf[read:16])
+		if err != nil {
+			panic("Should never get here")
+		}
+		read += n
+	}
 
 	v1 := binary.LittleEndian.Uint64(b.twoUintBuf[:8])
 	v2 := binary.LittleEndian.Uint64(b.twoUintBuf[8:16])
 
-        b.prgMutex.Unlock()
+	b.prgMutex.Unlock()
 
-        return v1, v2 
+	return v1, v2
 }
 
 func (b *BufPRGReader) Uint64() uint64 {
@@ -149,28 +149,6 @@ func (b *BufPRGReader) Uint64() uint64 {
 	return v
 }
 
-func (b *BufPRGReader) Bit() uint64 {
-        b.prgMutex.Lock()
-        read := 0
-        for read < 1 {
-                n, err := b.stream.Read(b.twoUintBuf[read:1])
-                if err != nil {
-                        panic("Should never get here")
-                }
-                read += n
-        }
-
-	res := uint64(0)
-	if b.twoUintBuf[0] & 1 == 1 {
-		res = uint64(1)
-	}
-
-        b.prgMutex.Unlock()
-
-        return res
-}
-
 func (b *BufPRGReader) Seed(int64) {
 	panic("Should never call seed")
 }
-
