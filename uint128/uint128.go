@@ -1,6 +1,6 @@
 // Adapted from: source file src/net/netip/Uint128.go
 
-package share
+package uint128
 
 // #cgo CFLAGS: -O3 -march=native -msse4.1 -maes -mavx2 -mavx
 // #include "uint128.h"

@@ -1,47 +1,46 @@
 package protocol
 
 import (
-	"fmt"
-	"net"
 	"bytes"
-	"net/rpc"
+	"fmt"
 	"math/bits"
+	"net"
+	"net/rpc"
 	"sync"
 
 	crand "crypto/rand"
 
-        "private-recs/rand"
-        "private-recs/multdpf"
-
-        . "private-recs/share"
+	"github.com/NudgeArtifact/private-recs/multdpf"
+	"github.com/NudgeArtifact/private-recs/rand"
+	. "github.com/NudgeArtifact/private-recs/share"
 )
 
 type Submission struct {
-	ClientId        uint64
-	Key  	        multdpf.DPFkey
+	ClientId uint64
+	Key      multdpf.DPFkey
 }
 
 type ClientData struct {
-	NumSubmissions  int
-	NextSeed        multdpf.Block
+	NumSubmissions int
+	NextSeed       multdpf.Block
 }
 
 type DataCollectionServer struct {
-        Id              int 
+	Id int
 
-	Nusers          uint64
-	Nitems          uint64
-	logNitems       uint64
+	Nusers    uint64
+	Nitems    uint64
+	logNitems uint64
 
-	matMu           sync.Mutex
-	M               *Matrix[Share128]   // share of matrix
-        prg             *rand.PrgPool       // shared secrets with other servers (own prgs are at position s.Id) 
+	matMu sync.Mutex
+	M     *Matrix[Share128] // share of matrix
+	prg   *rand.PrgPool     // shared secrets with other servers (own prgs are at position s.Id)
 
-	listening       bool
-	Listener        net.Listener
+	listening bool
+	Listener  net.Listener
 
-	mu              sync.Mutex
-	Clients         map[uint64]ClientData
+	mu      sync.Mutex
+	Clients map[uint64]ClientData
 }
 
 func LaunchDataCollectionServer(id int, num_users, num_items uint64, hang bool) *DataCollectionServer {
@@ -49,7 +48,7 @@ func LaunchDataCollectionServer(id int, num_users, num_items uint64, hang bool) 
 	s.Id = id
 	s.Nusers = num_users
 	s.Nitems = num_items
-	s.logNitems = uint64(bits.Len64(num_items-1))
+	s.logNitems = uint64(bits.Len64(num_items - 1))
 
 	s.M = MatrixZeros[Share128](num_users, num_items)
 	s.prg = InitPRGPoolFromMatrix(s.M)
@@ -107,9 +106,9 @@ func (s *DataCollectionServer) LogRating(query *Submission, ans *multdpf.Block) 
 	v, ok := s.Clients[query.ClientId]
 	s.mu.Unlock()
 
-        if  !ok {
-		panic("LogRating: Client did not previously register with RegisterClient()") 
-        }
+	if !ok {
+		panic("LogRating: Client did not previously register with RegisterClient()")
+	}
 
 	v.NextSeed[0] &^= 0x3
 	if !bytes.Equal(v.NextSeed[:16], query.Key[:16]) {
@@ -124,14 +123,14 @@ func (s *DataCollectionServer) LogRating(query *Submission, ans *multdpf.Block) 
 	AddToRowFromSlice(s.M, query.ClientId, vals)
 	s.matMu.Unlock()
 
-        v.NumSubmissions += 1
+	v.NumSubmissions += 1
 	crand.Read(v.NextSeed[:])
 
 	s.mu.Lock()
 	s.Clients[query.ClientId] = v
 	s.mu.Unlock()
 
-        *ans = v.NextSeed
+	*ans = v.NextSeed
 
 	//fmt.Printf("RPC: logged rating from client %d\n", query.ClientId)
 

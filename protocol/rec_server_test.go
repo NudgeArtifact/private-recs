@@ -1,12 +1,12 @@
 package protocol
 
 import (
-        "fmt"
-        "sync"
-        "testing"
+	"fmt"
+	"sync"
+	"testing"
 
-        . "private-recs/share"
-	"private-recs/rand"
+	"github.com/NudgeArtifact/private-recs/rand"
+	. "github.com/NudgeArtifact/private-recs/share"
 )
 
 func testRecs(t *testing.T, clientEmbs []Matrix[uint64], itemEmbs []Matrix[uint64]) {
@@ -36,11 +36,11 @@ func testRecs(t *testing.T, clientEmbs []Matrix[uint64], itemEmbs []Matrix[uint6
 
 	// Launch 3 servers
 	wg[3].Add(3)
-        for i := 0; i <= 2; i++ {
+	for i := 0; i <= 2; i++ {
 		wg[i].Add(1)
 
-                go func(id int) {
-                        s := LaunchRecServer(id, uint64(nusers), uint64(nitems), false /* hang */, clientShares[i], itemEmbs)
+		go func(id int) {
+			s := LaunchRecServer(id, uint64(nusers), uint64(nitems), false /* hang */, clientShares[i], itemEmbs)
 
 			wg[3].Done() // server rings this when starts listening
 
@@ -49,12 +49,12 @@ func testRecs(t *testing.T, clientEmbs []Matrix[uint64], itemEmbs []Matrix[uint6
 			wg[i].Wait() // client rings this when all tests complete
 
 			s.StopListening()
-                }(i)
-        }
+		}(i)
+	}
 
 	// Start building queries
 	clusterIds := make([]int, nclusters)
-        for i := 0; i < nclusters; i++ {
+	for i := 0; i < nclusters; i++ {
 		clusterIds[i] = i
 	}
 
@@ -91,7 +91,7 @@ func testRecs(t *testing.T, clientEmbs []Matrix[uint64], itemEmbs []Matrix[uint6
 				fmt.Println("Got: ")
 				PrintSigned(res[j])
 				t.Fail()
-		                panic("Matrices not equal!")
+				panic("Matrices not equal!")
 			}
 		}
 	}
@@ -128,51 +128,51 @@ func TestRecsSmall(t *testing.T) {
 }
 
 func TestRecsMed(t *testing.T) {
-        fmt.Println("TestRecsMed")
+	fmt.Println("TestRecsMed")
 
-        d := uint64(20)
-        nclients := 1
-        nclusters := 1
-        itemsPerCluster := uint64(20)
-        pool := rand.InitPRGPool(10)
+	d := uint64(20)
+	nclients := 1
+	nclusters := 1
+	itemsPerCluster := uint64(20)
+	pool := rand.InitPRGPool(10)
 
-        clientEmbs := make([]Matrix[uint64], 0)
-        for i := 0; i < nclients; i++ {
-                mat := RandMatrix[uint64](d, 1, 0, 10, pool)
-                clientEmbs = append(clientEmbs, *mat)
-        }
+	clientEmbs := make([]Matrix[uint64], 0)
+	for i := 0; i < nclients; i++ {
+		mat := RandMatrix[uint64](d, 1, 0, 10, pool)
+		clientEmbs = append(clientEmbs, *mat)
+	}
 
-        itemEmbs := make([]Matrix[uint64], 0)
-        for i := 0; i < nclusters; i++ {
-                mat := RandMatrix[uint64](itemsPerCluster, d, 0, 1000, pool)
-                itemEmbs = append(itemEmbs, *mat)
-        }
+	itemEmbs := make([]Matrix[uint64], 0)
+	for i := 0; i < nclusters; i++ {
+		mat := RandMatrix[uint64](itemsPerCluster, d, 0, 1000, pool)
+		itemEmbs = append(itemEmbs, *mat)
+	}
 
-        fmt.Println("   finished setup")
-        testRecs(t, clientEmbs, itemEmbs)
+	fmt.Println("   finished setup")
+	testRecs(t, clientEmbs, itemEmbs)
 }
 
 func TestRecsBig(t *testing.T) {
-        fmt.Println("TestRecsBig")
+	fmt.Println("TestRecsBig")
 
-        d := uint64(50)
-        nclients := 100
-        nclusters := 1
-        itemsPerCluster := uint64(10)
-        pool := rand.InitPRGPool(100)
+	d := uint64(50)
+	nclients := 100
+	nclusters := 1
+	itemsPerCluster := uint64(10)
+	pool := rand.InitPRGPool(100)
 
-        clientEmbs := make([]Matrix[uint64], 0)
-        for i := 0; i < nclients; i++ {
-                mat := RandMatrix[uint64](d, 1, 0, 10, pool)
-                clientEmbs = append(clientEmbs, *mat)
-        }
+	clientEmbs := make([]Matrix[uint64], 0)
+	for i := 0; i < nclients; i++ {
+		mat := RandMatrix[uint64](d, 1, 0, 10, pool)
+		clientEmbs = append(clientEmbs, *mat)
+	}
 
-        itemEmbs := make([]Matrix[uint64], 0)
-        for i := 0; i < nclusters; i++ {
-                mat := RandMatrix[uint64](itemsPerCluster, d, 0, 1000, pool)
-                itemEmbs = append(itemEmbs, *mat)
-        }
+	itemEmbs := make([]Matrix[uint64], 0)
+	for i := 0; i < nclusters; i++ {
+		mat := RandMatrix[uint64](itemsPerCluster, d, 0, 1000, pool)
+		itemEmbs = append(itemEmbs, *mat)
+	}
 
-        fmt.Println("   finished setup")
-        testRecs(t, clientEmbs, itemEmbs)
+	fmt.Println("   finished setup")
+	testRecs(t, clientEmbs, itemEmbs)
 }

@@ -1,10 +1,10 @@
 package protocol
 
 import (
-  "fmt"
-  "net"
-  "net/rpc"
-  "crypto/tls"
+	"crypto/tls"
+	"fmt"
+	"net"
+	"net/rpc"
 )
 
 var publicKey = `-----BEGIN CERTIFICATE-----
@@ -28,187 +28,135 @@ CbIvgQXEeZpTgn+A5N7YpdooUiwtICadeA==
 `
 
 const (
-  ServerPort = "1234"
-  ServerPort0 = "1235"
-  ServerPort1 = "1236"
-  ServerPort2 = "1237"
-  Port0To1 = "1235"
-  Port0To2 = "1236"
-  Port1To0 = "1237"
-  Port1To2 = "1238"
-  Port2To0 = "1239"
-  Port2To1 = "1230"
+	ServerPort  = "1234"
+	ServerPort0 = "1235"
+	ServerPort1 = "1236"
+	ServerPort2 = "1237"
+	Port0To1    = "1235"
+	Port0To2    = "1236"
+	Port1To0    = "1237"
+	Port1To2    = "1238"
+	Port2To0    = "1239"
+	Port2To1    = "1230"
 )
 
 func LocalAddr(port string) string {
-  return localIP().String() + ":" + port
+	return localIP().String() + ":" + port
 }
 
-func RemoteAddr(ip, port string) string {
-  return ip + ":" + port
-}
 
 func localIP() net.IP {
-  addrs, err := net.InterfaceAddrs()
-  if err != nil {
-    fmt.Println(err)
-    panic("Error looking up own IP")
-  }
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		fmt.Println(err)
+		panic("Error looking up own IP")
+	}
 
-  for _, addr := range addrs {
-    if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-      if ipnet.IP.To4() != nil {
-        return ipnet.IP
-      }
-    }
-  }
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP
+			}
+		}
+	}
 
-  panic("Own IP not found")
-  return nil
+	panic("Own IP not found")
+	return nil
 }
 
-/*
- * callTLS and callTCP send an RPC to the server; then wait for the response.
- */
-func DialTLS(address string) (*rpc.Client) {
-  var config tls.Config
-  config.InsecureSkipVerify = true
+// DialTLS connects to an RPC server over TLS.
+func DialTLS(address string) *rpc.Client {
+	var config tls.Config
+	config.InsecureSkipVerify = true
 
-  conn, err := tls.Dial("tcp", address, &config)
-  if err != nil {
-    panic(err)
-    panic("Should not happen")
-  }
+	conn, err := tls.Dial("tcp", address, &config)
+	if err != nil {
+		panic(err)
+		panic("Should not happen")
+	}
 
-  return rpc.NewClient(conn)
+	return rpc.NewClient(conn)
 }
 
 func CallTLS(c *rpc.Client, rpcname string, args interface{}, reply interface{}) {
-  err := c.Call(rpcname, args, reply)
-  if err == nil {
-    return 
-  }
+	err := c.Call(rpcname, args, reply)
+	if err == nil {
+		return
+	}
 
-  fmt.Printf("Err: %s\n", err)
-  panic("Call failed")
+	fmt.Printf("Err: %s\n", err)
+	panic("Call failed")
 }
 
-func DialTCP(addr string) *rpc.Client {
-  c, err := rpc.Dial("tcp", addr)
-
-  if err != nil {
-    fmt.Printf("Tried to dial %s\n", addr)
-    fmt.Printf("DialHTTP error: %s\n", err)
-    panic("Dialing error")
-  }
-
-  return c
-}
-
-func CallTCP(c *rpc.Client, rpcname string, args interface{}, reply interface{}) {
-  err := c.Call(rpcname, args, reply)
-  if err == nil {
-    return 
-  }
-
-  fmt.Printf("Err: %s\n", err)
-  panic("Call failed")
-}
-
-/*
- * serveTLS and serveTCP implement the server-side networking logic.
- */
-func ListenAndServeTCP(server *rpc.Server, port string) {
-  address := LocalAddr(port)
-  l, err := net.Listen("tcp", address)
-  if err != nil {
-    fmt.Printf("Listener error: %v\n", err)
-    panic("Listener error")
-  }
-
-  defer l.Close()
-
-  fmt.Printf("TCP server listening on %s\n", address)
-  for {
-    conn, err := l.Accept()
-    if err != nil {
-      fmt.Printf("Listener error: %v\n", err)
-      continue
-    }
-
-    defer conn.Close()
-    go server.ServeConn(conn)
-  }
-}
-
+// ListenAndServeTLS starts a TLS RPC server on the given port.
 func ListenAndServeTLS(server *rpc.Server, port string, hang bool) net.Listener {
-  address := LocalAddr(port)
-  cert, err := tls.X509KeyPair([]byte(publicKey), []byte(privateKey))
-  if err != nil {
-    fmt.Printf("Could not load certficate: %v\n", err)
-    panic("Could not load certificate")
-  }
+	address := LocalAddr(port)
+	cert, err := tls.X509KeyPair([]byte(publicKey), []byte(privateKey))
+	if err != nil {
+		fmt.Printf("Could not load certficate: %v\n", err)
+		panic("Could not load certificate")
+	}
 
-  var config tls.Config
-  config.InsecureSkipVerify = true
-  config.Certificates = []tls.Certificate{cert}
+	var config tls.Config
+	config.InsecureSkipVerify = true
+	config.Certificates = []tls.Certificate{cert}
 
-  l, err := tls.Listen("tcp", address, &config)
-  if err != nil {
-    fmt.Printf("Listener error: %v\n", err)
-    panic("Listener error")
-  }
+	l, err := tls.Listen("tcp", address, &config)
+	if err != nil {
+		fmt.Printf("Listener error: %v\n", err)
+		panic("Listener error")
+	}
 
-  //defer l.Close()
+	//defer l.Close()
 
-  fmt.Printf("TLS server listening on %s\n", address)
+	fmt.Printf("TLS server listening on %s\n", address)
 
-  if hang {
-     for {
-        conn, err := l.Accept()
-        if err != nil {
-            // Accept returns error when listener is closed
-            fmt.Printf("accept error: %v", err)
-            //return l
-        }
-  
-        go handleOneClientTLS(conn, server)
-     }
+	if hang {
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				// Accept returns error when listener is closed
+				fmt.Printf("accept error: %v", err)
+				//return l
+			}
 
-     return l // unreachable
-  }
+			go handleOneClientTLS(conn, server)
+		}
 
-  go func(l net.Listener) {
-    for {
-        conn, err := l.Accept()
-        if err != nil {
-            // Accept returns error when listener is closed
-            fmt.Printf("accept error: %v", err)
-            return
-        }
+		return l // unreachable
+	}
 
-  	go handleOneClientTLS(conn, server)
-     }
-  }(l)
+	go func(l net.Listener) {
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				// Accept returns error when listener is closed
+				fmt.Printf("accept error: %v", err)
+				return
+			}
 
-  return l
+			go handleOneClientTLS(conn, server)
+		}
+	}(l)
+
+	return l
 }
 
 func handleOneClientTLS(conn net.Conn, server *rpc.Server) {
-  defer conn.Close()
+	defer conn.Close()
 
-  tlscon, ok := conn.(*tls.Conn)
-  if !ok {
-    fmt.Println("Could not cast conn")
-    return
-  }
+	tlscon, ok := conn.(*tls.Conn)
+	if !ok {
+		fmt.Println("Could not cast conn")
+		return
+	}
 
-  err := tlscon.Handshake()
-  if err != nil {
-    fmt.Printf("Handshake failed: %v\n", err)
-    return
-  }
-  fmt.Println("Handshake OK")
+	err := tlscon.Handshake()
+	if err != nil {
+		fmt.Printf("Handshake failed: %v\n", err)
+		return
+	}
+	fmt.Println("Handshake OK")
 
-  server.ServeConn(conn)
+	server.ServeConn(conn)
 }

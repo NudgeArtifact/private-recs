@@ -1,40 +1,40 @@
 package protocol
 
 import (
-        "fmt"
-        "sync"
+	"fmt"
+	"strconv"
+	"sync"
+	"testing"
 	"time"
-        "strconv"
-        "testing"
 
-        . "private-recs/share"
+	. "github.com/NudgeArtifact/private-recs/share"
 )
 
 func testDataCollection(t *testing.T, ratings *Matrix[uint64], shareName string) {
 	var perf PerfLog
 	wg := make([]sync.WaitGroup, 4)
-        wg[3].Add(3)
+	wg[3].Add(3)
 
 	nusers := ratings.Rows
 	nitems := ratings.Cols
 
 	// Launch 3 servers
-        for i := 0; i <= 2; i++ {
+	for i := 0; i <= 2; i++ {
 		wg[i].Add(1)
 
-                go func(id int) {
-                        file := shareName + "mat" + strconv.Itoa(id) + ".csv"
-                        s := LaunchDataCollectionServer(id, nusers, nitems, false /* hang */)
+		go func(id int) {
+			file := shareName + "mat" + strconv.Itoa(id) + ".csv"
+			s := LaunchDataCollectionServer(id, nusers, nitems, false /* hang */)
 
 			wg[i].Wait() // client rings this when all ratings written
 
-                        WriteMatrixShareToFile(s.M, file)
+			WriteMatrixShareToFile(s.M, file)
 
 			wg[3].Done() // server rings this when shares written
 
 			s.StopListening()
-                }(i)
-        }
+		}(i)
+	}
 
 	time.Sleep(1 * time.Second) // hack to make sure all the servers are up and listening
 
@@ -82,25 +82,25 @@ func TestDataCollectionSmall(t *testing.T) {
 	fmt.Println("TestDataCollectionSmall")
 
 	U := MatrixZeros[uint64](5, 10)
-        one := uint64(1)
-        U.Set(1, 2, &one)
-        U.Set(4, 9, &one)
+	one := uint64(1)
+	U.Set(1, 2, &one)
+	U.Set(4, 9, &one)
 
 	testDataCollection(t, U, "scratch/")
 }
 
 func TestDataCollectionMed(t *testing.T) {
-        fmt.Println("TestDataCollectionMed")
+	fmt.Println("TestDataCollectionMed")
 
 	U := MatrixZeros[uint64](100, 100)
-        one := uint64(1)
-        U.Set(1, 2, &one)
-        U.Set(1, 3, &one)
-        U.Set(1, 4, &one)
-        U.Set(1, 49, &one)
-        U.Set(4, 9, &one)
-        U.Set(4, 91, &one)
-        U.Set(4, 98, &one)
+	one := uint64(1)
+	U.Set(1, 2, &one)
+	U.Set(1, 3, &one)
+	U.Set(1, 4, &one)
+	U.Set(1, 49, &one)
+	U.Set(4, 9, &one)
+	U.Set(4, 91, &one)
+	U.Set(4, 98, &one)
 
-        testDataCollection(t, U, "scratch/")
+	testDataCollection(t, U, "scratch/")
 }
