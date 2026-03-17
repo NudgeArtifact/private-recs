@@ -1,0 +1,12 @@
+{
+  "K": 2,
+  "N_iters": 10,
+  "N_decimals": 20,
+  "Norm_decimals": 40,
+  "Newton_iters": 5,
+
+  "Normalize": false,
+  "Verbose":   false,
+  "Start_random":  false,
+  "Save_truncate": true
+}
