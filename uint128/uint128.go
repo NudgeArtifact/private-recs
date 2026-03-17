@@ -164,12 +164,6 @@ func (u *Uint128) MulAddInPlace(v1, v2 *Uint128) {
 	C.mulAddInPlace(e(u), e(v1), e(v2))
 }
 
-func Mul64(u *Uint128, v uint64) *Uint128 {
-	dst := new(Uint128)
-	C.mul64(e(u), (*C.Elem64)(&v), e(dst))
-	return dst
-}
-
 func Mul64Dst(u *Uint128, v uint64, dst *Uint128) {
 	C.mul64(e(u), (*C.Elem64)(&v), e(dst))
 }

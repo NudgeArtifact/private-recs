@@ -799,12 +799,6 @@ func MatrixPtxtMulDst(a *Matrix[uint64], b, c *Matrix[Share128]) {
 	wg.Wait()
 }
 
-func MatrixTransposePtxtMul(a *Matrix[uint64], b *Matrix[Share128]) *Matrix[Share128] {
-	c := MatrixZeros[Share128](a.Cols, b.Cols)
-	MatrixTransposePtxtMulDst(a, b, c)
-	return c
-}
-
 func MatrixTransposePtxtMulDst(a *Matrix[uint64], b, c *Matrix[Share128]) {
 	if a.Rows != b.Rows || c.Rows != a.Cols || c.Cols != b.Cols {
 		fmt.Printf("Multiplying (%d, %d) and (%d, %d) matrices\n", a.Rows, a.Cols, b.Rows, b.Cols)
@@ -1207,26 +1201,6 @@ func MatrixMulRSSPtxtDst(a *Matrix[Share128], b *Matrix[uint64], c *Matrix[Share
 }
 
 
-func MatrixAddRSSInPlace(m0, m1 *Matrix[Share128]) {
-	if !(m1.Rows == m0.Rows && m1.Cols == m0.Cols) {
-		fmt.Printf("Adding (%d, %d) and (%d, %d) matrices\n", m0.Rows, m0.Cols, m1.Rows, m1.Cols)
-		panic("MatrixAddRSSInPlace: Input matrix dimensions do not match")
-	}
-
-	var wg sync.WaitGroup
-	for i := uint64(0); i < m0.Rows; i++ {
-		wg.Add(1)
-
-		go func(m0, m1 *Matrix[Share128], i uint64) {
-			defer wg.Done()
-			for j := uint64(0); j < m0.Cols; j++ {
-				AddRSSInPlace128(&m0.Data[i*m0.Cols+j], &m1.Data[i*m0.Cols+j])
-			}
-		}(m0, m1, i)
-	}
-
-	wg.Wait()
-}
 
 func MatrixAddInPlace128(ms ...*Matrix[Uint128]) *Matrix[Uint128] {
 	rows := ms[0].Rows
@@ -1329,30 +1303,6 @@ func MatrixSubInPlace(m0, m1 *Matrix[uint64]) {
 				}
 			}
 		}(m0, m1, i)
-	}
-
-	wg.Wait()
-}
-
-func MatrixAddScalarInPlace(m *Matrix[uint64], c uint64) {
-	var wg sync.WaitGroup
-	rows_per_thread := (m.Rows + NUM_VCPUS - 1) / NUM_VCPUS
-
-	for i := uint64(0); i < m.Rows; i += rows_per_thread {
-		wg.Add(1)
-
-		go func(m *Matrix[uint64], c, i uint64) {
-			defer wg.Done()
-
-			for i2 := uint64(0); i2 < rows_per_thread; i2++ {
-				if i+i2 >= m.Rows {
-					break
-				}
-				for j := uint64(0); j < m.Cols; j++ {
-					m.Data[(i+i2)*m.Cols+j] += c
-				}
-			}
-		}(m, c, i)
 	}
 
 	wg.Wait()
@@ -1730,23 +1680,3 @@ func MatrixRshSignedDst(m *Matrix[uint64], decimals int, out *Matrix[uint64]) {
 	wg.Wait()
 }
 
-func GetNorm(m *Matrix[uint64], decimals int) uint64 {
-	norm_sq := MakeUint128(0, 0)
-
-	for i := uint64(0); i < m.Rows; i++ {
-		for j := uint64(0); j < m.Cols; j++ {
-			val := ToUint128(m.Data[i*m.Cols+j])
-			interm := Mul(val, val)
-			norm_sq.AddInPlace(interm)
-		}
-	}
-
-	norm_sq.RshInPlace(2 * uint(decimals))
-	if !CheckUint64(norm_sq) {
-		norm_sq.Print()
-		panic("Norm squared should fit in 64 bits")
-	}
-
-	norm_sq_int := ToUint64(norm_sq)
-	return uint64(math.Sqrt(float64(norm_sq_int)))
-}

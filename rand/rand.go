@@ -84,10 +84,6 @@ func RandomPRGKey() *PRGKey {
 	return &key
 }
 
-func RandomPRG() *PRGReader {
-	return NewPRG(RandomPRGKey())
-}
-
 func (s *PRGReader) Read(p []byte) (int, error) {
 	if len(p) < aes.BlockSize {
 		clear(s.aesBuf[:])

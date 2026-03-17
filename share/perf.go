@@ -13,15 +13,6 @@ type PerfLog struct {
 	comm0To2 uint64
 }
 
-func (p *PerfLog) IncrementComm(q PerfLog) {
-	p.comm0To1 += q.comm0To1
-	p.comm1To0 += q.comm1To0
-	p.comm1To2 += q.comm1To2
-	p.comm2To1 += q.comm2To1
-	p.comm2To0 += q.comm2To0
-	p.comm0To2 += q.comm0To2
-}
-
 func (p *PerfLog) IdentifyDealer() uint {
 	comm0 := p.comm0To1 + p.comm0To2
 	comm1 := p.comm1To2 + p.comm1To0

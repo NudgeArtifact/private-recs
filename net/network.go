@@ -69,47 +69,6 @@ func (n *Network) Close() {
 	}
 }
 
-func NewTestNetwork(n int, numWorkers int) []*Network {
-	readers := make([]io.Reader, n*n*numWorkers)
-	writers := make([]io.Writer, n*n*numWorkers)
-
-	for i := 0; i < n*n*numWorkers; i++ {
-		start, end := io.Pipe()
-		readers[i] = start
-		writers[i] = end
-	}
-
-	out := make([]*Network, n)
-	for i := 0; i < n; i++ {
-		out[i] = &Network{
-			myIdx:     i,
-			senders:   make([][]io.Writer, n),
-			receivers: make([][]io.Reader, n),
-			bytesSent: make([][]int, n),
-			bytesRecv: make([][]int, n),
-			sendMu:    make([][]sync.Mutex, n),
-			recvMu:    make([][]sync.Mutex, n),
-			outgoing:  make([][]byte, 3),
-		}
-
-		for j := 0; j < n; j++ {
-			out[i].senders[j] = make([]io.Writer, numWorkers)
-			out[i].receivers[j] = make([]io.Reader, numWorkers)
-			out[i].bytesSent[j] = make([]int, numWorkers)
-			out[i].bytesRecv[j] = make([]int, numWorkers)
-			out[i].sendMu[j] = make([]sync.Mutex, numWorkers)
-			out[i].recvMu[j] = make([]sync.Mutex, numWorkers)
-
-			for k := 0; k < numWorkers; k++ {
-				out[i].senders[j][k] = writers[i*n+j*numWorkers+k]
-				out[i].receivers[j][k] = readers[j*n+i*numWorkers+k]
-			}
-		}
-	}
-
-	return out
-}
-
 // Input: port numbers to listen on and ip_addr:port pairs to
 // establish connections with
 func NewTCPNetwork(idx int, config *NetworkConfig) *Network {
@@ -211,10 +170,6 @@ func NewTCPNetwork(idx int, config *NetworkConfig) *Network {
 	return n
 }
 
-func (n *Network) MyIdx() int {
-	return n.myIdx
-}
-
 func ByteLen(msg interface{}) int {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -303,12 +258,6 @@ func (n *Network) appendByteArr(idx int, arr []byte) {
 	n.outgoing[idx] = append(n.outgoing[idx], arr...)
 }
 
-func (n *Network) AppendByteArr(idx int, arr []byte) {
-	n.sendMu[idx][0].Lock()
-	defer n.sendMu[idx][0].Unlock()
-	n.appendByteArr(idx, arr)
-}
-
 func (n *Network) recvByteArr(idx int) []byte {
 	var intBuf [8]byte
 	n.RecvBytes(idx, intBuf[:])
@@ -317,12 +266,6 @@ func (n *Network) recvByteArr(idx int) []byte {
 	msgBytes := make([]byte, msgLen)
 	n.RecvBytes(idx, msgBytes)
 	return msgBytes
-}
-
-func (n *Network) RecvByteArr(idx int) []byte {
-	n.recvMu[idx][0].Lock()
-	defer n.recvMu[idx][0].Unlock()
-	return n.recvByteArr(idx)
 }
 
 func (n *Network) AppendTruncKey(idx int, key *share.TruncKey) {

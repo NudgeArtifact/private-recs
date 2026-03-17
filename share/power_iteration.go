@@ -219,7 +219,6 @@ func PowerIteration(U0, U1, U2 *Matrix[Share128], params *PowerItParams, pool *P
 
 		B.SetRow(uint64(component), v)
 		fmt.Printf("Recovered component %d\n", component)
-		//fmt.Printf("Norm of recovered factor: %d\n", GetNorm(v, 0))
 	}
 
 	fmt.Println("Returing from power iteration...")
