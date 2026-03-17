@@ -2,6 +2,8 @@
 
 > Nudge is a recommender system with cryptographic privacy. A Nudge deployment consists of three infrastructure servers and many users, who retrieve/rate items from a large data set (e.g., videos, posts, businesses). Periodically, the Nudge servers collect ratings from users in secret-shared form, then run a three-party computation to train a lightweight recommender model on users' private ratings. Finally, the servers deliver personalized recommendations to each user. At every step, Nudge reveals nothing to the servers about any user's preferences beyond the aggregate model itself. User privacy holds against an adversary that compromises the entire secret state of one server. The technical core of Nudge is a new, three-party protocol for matrix factorization. On the Netflix data set with half a million users and ten thousand items, Nudge (running on three 192-core servers on a local-area network) privately learns a recommender model in 50 mins with 40 GB of server-to-server communication. On a standard quality benchmark (nDCG@20), Nudge scores 0.29 out of 1.0, on par with non-private matrix factorization and just shy of non-private neural recommenders, which score 0.31.
 
+> <img src="nudge.png" width="500">
+
 This repository contains the code for the paper [Nudge: A Private Recommendations Engine](https://eprint.iacr.org/2026/179.pdf) by Alexandra Henzinger, Emma Dauterman, Henry Corrigan-Gibbs, and Dan Boneh (USENIX Security 2026).
 
 **Warning**: This code is a research prototype.
